@@ -15,6 +15,11 @@ jar {
                 'Main-Class': 'org.example.ucs.client.Main'
         )
     }
+    from {
+        // This will unpack all dependencies into the JAR
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 dependencies {
