@@ -4,6 +4,7 @@ import org.example.ucs.client.responses.ResponseDecodingFactory;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
 
 final class Receiver implements Runnable {
@@ -29,9 +30,15 @@ final class Receiver implements Runnable {
                 InetSocketAddress response = (InetSocketAddress) channel.receive(buffer);
                 if (response != null) {
                     responseDecodingFactory.handle(buffer);
+                } else {
+                    Thread.sleep(1);
                 }
-                Thread.yield();
-            } catch (Exception e) {
+            } catch (final ClosedChannelException e) {
+                break;
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            } catch (final Exception e) {
                 System.err.println("Receiver error: " + e);
             }
         }

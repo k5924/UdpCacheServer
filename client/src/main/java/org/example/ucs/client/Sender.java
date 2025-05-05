@@ -4,6 +4,7 @@ import org.example.ucs.client.commands.CommandHandler;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
 
 final class Sender implements Runnable {
@@ -29,6 +30,7 @@ final class Sender implements Runnable {
             try {
                 CommandHandler.InputOption inputOption = commandHandler.expectInput();
                 if (inputOption == CommandHandler.InputOption.EXIT) {
+                    System.out.println("Exiting client...");
                     client.stop();
                     break;
                 } else {
@@ -36,9 +38,16 @@ final class Sender implements Runnable {
                     commandHandler.executeInput(buffer, inputOption);
                     if (buffer.hasRemaining()) {
                         channel.send(buffer, serverAddress);
+                    } else {
+                        Thread.sleep(1);
                     }
                 }
-            } catch (Exception e) {
+            } catch (final ClosedChannelException e) {
+                break;
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            } catch (final Exception e) {
                 System.err.println("Sender error: " + e);
             }
         }

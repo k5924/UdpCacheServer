@@ -13,6 +13,8 @@ final class Client {
     private final ResponseDecodingFactory responseDecodingFactory;
     private final CommandHandler commandHandler;
     private DatagramChannel channel = null;
+    private Thread receiverThread = null;
+    private Thread senderThread = null;
     private volatile boolean running = true;
 
     public Client(final int port,
@@ -28,8 +30,8 @@ final class Client {
         try {
             channel = DatagramChannel.open();
             channel.configureBlocking(false);
-            Thread receiverThread = new Thread(new Receiver(channel, responseDecodingFactory, this));
-            Thread senderThread = new Thread(new Sender(channel, serverAddress, commandHandler, this));
+            receiverThread = new Thread(new Receiver(channel, responseDecodingFactory, this));
+            senderThread = new Thread(new Sender(channel, serverAddress, commandHandler, this));
             receiverThread.start();
             senderThread.start();
             Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
@@ -50,6 +52,17 @@ final class Client {
             } catch (IOException e) {
                 System.err.println("Client error on shutdown: " + e);
             }
+        }
+        try {
+            if (senderThread != null) {
+                senderThread.join();
+            }
+            if (receiverThread != null) {
+                receiverThread.join();
+            }
+        } catch (final InterruptedException e) {
+            System.err.println("Client error on joining threads: " + e);
+            Thread.currentThread().interrupt();
         }
     }
 }
