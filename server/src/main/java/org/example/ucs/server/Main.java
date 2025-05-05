@@ -7,10 +7,19 @@ final class Main {
 
     public static void main(final String[] args) {
         System.out.println("Running server");
-        final Server server = new Server(7890, new CommandDecodingFactory(new Cache(),
-                new ResponseEncodingFactory()));
-        final Thread mainThread = new Thread(server);
-        Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
-        mainThread.start();
+        final String portString = System.getenv("PORT");
+        try {
+            final int port = Integer.parseInt(portString);
+            final Cache cache = new Cache();
+            final ResponseEncodingFactory responseEncodingFactory = new ResponseEncodingFactory();
+            final CommandDecodingFactory commandDecodingFactory = new CommandDecodingFactory(cache,
+                    responseEncodingFactory);
+            final Server server = new Server(port, commandDecodingFactory);
+            final Thread mainThread = new Thread(server);
+            Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
+            mainThread.start();
+        } catch (final Exception e) {
+            System.err.println("failed due to: " + e);
+        }
     }
 }

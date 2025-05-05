@@ -1,0 +1,19 @@
+services:
+  server:
+    build: ../server
+    container_name: cache-server
+    ports:
+      - "6001:6001/udp"
+    environment:
+      - PORT=6001
+
+  client:
+    build: ../client
+    container_name: cache-client
+    depends_on:
+      - server
+    environment:
+      - SERVER_PORT=6001
+      - SERVER_ADDRESS=cache-server
+    stdin_open: true
+    tty: true
